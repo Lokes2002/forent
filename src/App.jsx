@@ -23,7 +23,7 @@ function App() {
     formData.append("file", file);
 
     try {
-      const res = await axios.post("https://backedns-6.onrender.com/api/extract", formData,
+      const res = await axios.post("https://backedns.onrender.com/api/extract", formData,
 
         { headers: { "Content-Type": "multipart/form-data" } }
       );
