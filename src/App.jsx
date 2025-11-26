@@ -11,8 +11,7 @@ function App() {
   const [error, setError] = useState("");
 
   // ⚠ Backend URL yaha daalo
-  const BACKEND_URL = "https://your-backend.onrender.com/api/extract";
-
+  const BACKEND_URL = "https://backedns-gl73.onrender.com/api/extract";
   const uploadFile = async () => {
     if (!file) return;
     setLoading(true);
@@ -22,9 +21,11 @@ function App() {
     try {
       const imgBytes = await file.arrayBuffer();
 
-      const res = await axios.post(BACKEND_URL, imgBytes, {
-        headers: { "Content-Type": "application/octet-stream" }
-      });
+     const res = await axios.post(
+  BACKEND_URL,
+  imgBytes,
+  { headers: { "Content-Type": "application/octet-stream" } }
+);
 
       setResult(res.data);
     } catch (err) {
