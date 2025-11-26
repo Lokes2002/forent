@@ -2,9 +2,6 @@ import { useState } from "react";
 import axios from "axios";
 import DropZone from "./DropZone";
 import SuggestionsBox from "./components/SuggestionsBox";
-import ObjectsDetected from "./components/ObjectsDetected";
-import ImageAnalysis from "./analysis/imageAnalysis";
-
 import "./App.css";
 
 function App() {
@@ -13,8 +10,8 @@ function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  // ⚠ Backend URL yaha daalo (Render ka)
-  const BACKEND_URL = "https://your-backend.onrender.com/analyze";
+  // ⚠ Backend URL yaha daalo
+  const BACKEND_URL = "https://your-backend.onrender.com/api/extract";
 
   const uploadFile = async () => {
     if (!file) return;
@@ -23,20 +20,15 @@ function App() {
     setResult(null);
 
     try {
-      // Convert file → raw bytes
       const imgBytes = await file.arrayBuffer();
 
-      const res = await axios.post(
-        BACKEND_URL,
-        imgBytes,
-        {
-          headers: { "Content-Type": "application/octet-stream" }
-        }
-      );
+      const res = await axios.post(BACKEND_URL, imgBytes, {
+        headers: { "Content-Type": "application/octet-stream" }
+      });
 
       setResult(res.data);
     } catch (err) {
-      setError(err?.response?.data?.detail || "Something went wrong!");
+      setError(err?.response?.data?.error || "Something went wrong!");
     }
 
     setLoading(false);
@@ -44,18 +36,18 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Professional Header */}
+
+      {/* Header */}
       <header className="app-header">
         <div className="header-content">
           <h1>Social Media Content Analyzer</h1>
-          <p>Upload an Image → Detect Objects + Extract Text using AI</p>
+          <p>Upload any Image → Extract Text → Get AI Suggestions 🚀</p>
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="main-content">
-        
-        {/* Upload section */}
+
+        {/* Upload Section */}
         <div className="upload-section">
           <div className="upload-card">
 
@@ -66,7 +58,9 @@ function App() {
                 <span className="file-icon">📄</span>
                 <div className="file-details">
                   <p className="file-name">{file.name}</p>
-                  <p className="file-size">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                  <p className="file-size">
+                    {(file.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
                 </div>
               </div>
             )}
@@ -79,7 +73,7 @@ function App() {
               {loading ? (
                 <>
                   <div className="btn-spinner"></div>
-                  Analyzing your file...
+                  Analyzing your content...
                 </>
               ) : (
                 "🚀 Analyze Now"
@@ -102,37 +96,23 @@ function App() {
 
           {result && !loading && (
             <div className="results-container">
-              
+
               {/* Extracted Text */}
               <div className="result-card">
                 <div className="card-header">
                   <h3>📝 Extracted Text</h3>
                   <button
                     className="copy-btn"
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        result?.results?.map(r => r.text).join(" ")
-                      )
-                    }
+                    onClick={() => navigator.clipboard.writeText(result?.text)}
                   >
                     📋 Copy Text
                   </button>
                 </div>
 
                 <div className="text-preview">
-                  {result?.results?.map(r => r.text).join(" ") || "No text found"}
+                  {result?.text || "No text found"}
                 </div>
               </div>
-
-              {/* Objects Detected */}
-              {result?.results?.length > 0 && (
-                <ObjectsDetected data={result.results} />
-              )}
-
-              {/* Image Insights (optional UI section) */}
-              {result?.imageInsights && (
-                <ImageAnalysis insights={result.imageInsights} />
-              )}
             </div>
           )}
 
@@ -140,7 +120,7 @@ function App() {
             <div className="empty-state">
               <div className="empty-icon">📊</div>
               <h3>No Analysis Yet</h3>
-              <p>Upload an image to start AI analysis</p>
+              <p>Upload an image to start text extraction</p>
             </div>
           )}
         </div>
