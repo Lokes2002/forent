@@ -13,25 +13,30 @@ function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
+  // ⚠ Backend URL yaha daalo (Render ka)
+  const BACKEND_URL = "https://your-backend.onrender.com/analyze";
+
   const uploadFile = async () => {
     if (!file) return;
     setLoading(true);
     setError("");
     setResult(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const res = await axios.post("https://backedns.onrender.com/api/extract", formData,
+      // Convert file → raw bytes
+      const imgBytes = await file.arrayBuffer();
 
-        { headers: { "Content-Type": "multipart/form-data" } }
+      const res = await axios.post(
+        BACKEND_URL,
+        imgBytes,
+        {
+          headers: { "Content-Type": "application/octet-stream" }
+        }
       );
 
       setResult(res.data);
-
     } catch (err) {
-      setError(err?.response?.data?.error || "Something went wrong!");
+      setError(err?.response?.data?.detail || "Something went wrong!");
     }
 
     setLoading(false);
@@ -43,17 +48,19 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <h1>Social Media Content Analyzer</h1>
-          <p>Upload PDF or Image → Extract Text → Get AI-Powered Engagement Tips</p>
+          <p>Upload an Image → Detect Objects + Extract Text using AI</p>
         </div>
       </header>
 
-      {/* Main Content Grid */}
+      {/* Main Content */}
       <div className="main-content">
-        {/* Left Column - Upload Section */}
+        
+        {/* Upload section */}
         <div className="upload-section">
           <div className="upload-card">
+
             <DropZone onFileSelect={setFile} />
-            
+
             {file && (
               <div className="file-info">
                 <span className="file-icon">📄</span>
@@ -64,69 +71,68 @@ function App() {
               </div>
             )}
 
-            <button 
-              className={`upload-btn ${!file || loading ? 'disabled' : ''}`}
-              disabled={!file || loading} 
+            <button
+              className={`upload-btn ${!file || loading ? "disabled" : ""}`}
+              disabled={!file || loading}
               onClick={uploadFile}
             >
               {loading ? (
                 <>
                   <div className="btn-spinner"></div>
-                  Analyzing Content...
+                  Analyzing your file...
                 </>
               ) : (
-                '🚀 Analyze Now'
+                "🚀 Analyze Now"
               )}
             </button>
 
-            {error && (
-              <div className="error-message">
-                ⚠️ {error}
-              </div>
-            )}
+            {error && <div className="error-message">⚠ {error}</div>}
           </div>
         </div>
 
-        {/* Right Column - Results Section */}
+        {/* Results Section */}
         <div className="results-section">
           {loading && (
             <div className="loading-state">
               <div className="loading-spinner"></div>
-              <h3> Analyzing your content</h3>
-              <p>This may take a few seconds...</p>
+              <h3>Analyzing image...</h3>
+              <p>Please wait a few seconds...</p>
             </div>
           )}
 
           {result && !loading && (
             <div className="results-container">
+              
               {/* Extracted Text */}
               <div className="result-card">
                 <div className="card-header">
                   <h3>📝 Extracted Text</h3>
-                  <button 
+                  <button
                     className="copy-btn"
-                    onClick={() => navigator.clipboard.writeText(result.text)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        result?.results?.map(r => r.text).join(" ")
+                      )
+                    }
                   >
                     📋 Copy Text
                   </button>
                 </div>
+
                 <div className="text-preview">
-                  {result.text || "No text found"}
+                  {result?.results?.map(r => r.text).join(" ") || "No text found"}
                 </div>
               </div>
 
-              {/* Image Analysis */}
-              {result.imageInsights && (
+              {/* Objects Detected */}
+              {result?.results?.length > 0 && (
+                <ObjectsDetected data={result.results} />
+              )}
+
+              {/* Image Insights (optional UI section) */}
+              {result?.imageInsights && (
                 <ImageAnalysis insights={result.imageInsights} />
               )}
-
-              {/* Objects Detected */}
-              {result.objectsDetected && result.objectsDetected.length > 0 && (
-                <ObjectsDetected data={result.objectsDetected} />
-              )}
-
-              {/* AI Suggestions */}
-             
             </div>
           )}
 
@@ -134,20 +140,17 @@ function App() {
             <div className="empty-state">
               <div className="empty-icon">📊</div>
               <h3>No Analysis Yet</h3>
-              <p>Upload a file to see AI-powered insights and engagement tips</p>
+              <p>Upload an image to start AI analysis</p>
             </div>
           )}
-
-          
         </div>
-</div>
+      </div>
 
-{result?.suggestions?.length > 0 && (
-    <SuggestionsBox suggestions={result.suggestions} />
-)}
-
-</div>
-
+      {/* AI Suggestions */}
+      {result?.suggestions?.length > 0 && (
+        <SuggestionsBox suggestions={result.suggestions} />
+      )}
+    </div>
   );
 }
 
